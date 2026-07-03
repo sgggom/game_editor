@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阵型生成器</title>
+  <script type="module" crossorigin src="/game_editor/assets/index-CEFhtD9F.js"></script>
+  <link rel="stylesheet" crossorigin href="/game_editor/assets/index-BKoo4Km0.css">
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <div class="panel config-panel">
+                <div class="config-section module-card module-board-size module-group-data">
+                    <div class="config-title module-card-title module-card-title-with-action">
+                        <span>棋盘尺寸</span>
+                        <button
+                            type="button"
+                            class="module-title-action"
+                            id="btnAddBoardLayer"
+                            onclick="addBoardLayer(event)"
+                        >+层</button>
+                    </div>
+                    <div class="board-layer-list" id="boardLayerList"></div>
+                    <input type="hidden" id="width" value="8">
+                    <input type="hidden" id="height" value="12">
+                    <span class="slider-value board-size-hidden-value" id="widthValue">8</span>
+                    <span class="slider-value board-size-hidden-value" id="heightValue">12</span>
+                </div>
+
+                <div class="config-section module-card module-number-config module-group-data">
+                    <div class="config-title module-card-title">数字配置</div>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label>8张同色：</label>
+                            <div class="count-range-inline">
+                                <input type="number" id="count8Min" min="0" max="20" value="0" onchange="calculatePool()" title="8张同色最小值" aria-label="8张同色最小值">
+                                <input type="number" id="count8Max" min="0" max="20" value="0" onchange="calculatePool()" title="8张同色最大值" aria-label="8张同色最大值">
+                            </div>
+                        </div>
+                        <div class="config-item">
+                            <label>6张同色：</label>
+                            <div class="count-range-inline">
+                                <input type="number" id="count6Min" min="0" max="20" value="0" onchange="calculatePool()" title="6张同色最小值" aria-label="6张同色最小值">
+                                <input type="number" id="count6Max" min="0" max="20" value="0" onchange="calculatePool()" title="6张同色最大值" aria-label="6张同色最大值">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="config-section module-card module-direction-rule module-group-rules">
+                    <div class="config-title module-card-title">方向规则</div>
+                    <div class="direction-grid compact">
+                        <div class="direction-item selected" data-shortcut="0"
+                            onclick="selectDirection(0)" title="无规则">
+                            <input type="radio" name="direction" value="0" checked>
+                            <img class="direction-icon" src="/game_editor/assets/ruleIcon_0-DWviBK4M.png" alt="0">
+                            <div class="direction-name">0</div>
+                        </div>
+                        <div class="direction-item" data-shortcut="1"
+                            onclick="selectDirection(1)" title="向上">
+                            <input type="radio" name="direction" value="1">
+                            <img class="direction-icon" src="data:image/png;base64,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" alt="1">
+                            <div class="direction-name">1</div>
+                        </div>
+                        <div class="direction-item" data-shortcut="2"
+                            onclick="selectDirection(2)" title="向下">
+                            <input type="radio" name="direction" value="2">
+                            <img class="direction-icon" src="data:image/png;base64,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" alt="2">
+                            <div class="direction-name">2</div>
+                        </div>
+                        <div class="direction-item" data-shortcut="3"
+                            onclick="selectDirection(3)" title="向左">
+                            <input type="radio" name="direction" value="3">
+                            <img class="direction-icon" src="data:image/png;base64,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" alt="3">
+                            <div class="direction-name">3</div>
+                        </div>
+                        <div class="direction-item" data-shortcut="4"
+                            onclick="selectDirection(4)" title="向右">
+                            <input type="radio" name="direction" value="4">
+                            <img class="direction-icon" src="data:image/png;base64,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" alt="4">
+                            <div class="direction-name">4</div>
+                        </div>
+                        <div class="direction-item" data-shortcut="5"
+                            onclick="selectDirection(5)" title="上下向内">
+                            <input type="radio" name="direction" value="5">
+                            <img class="direction-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD0AAAA/CAYAAABTqsDiAAAOdUlEQVR4AdSaCXAc1ZnH33s9p0Zzj0b3ZR22Y1nCgA8thw8QNjY+oBLW1G6R5a4FZ5PdAkzVBiN5DSHsbhVR5Itlk1SwA6QCSeUAkpCQip0EG2ySlDHCNpLBh6TRHJrRjObs7nz/QfKhKJZG6imHqffpdb/3fd/7//r13RJs3M/j8VhLXK7PlXs8a8qKiu4i20TLX/msGPSS3UV6byGOeeAZh8guhBYul6vSIMQNQpJuUBibrXDuJjOpQug/Kwa9ZG4CbSSOFeABF62fYx1bkMrc7kaTJLVRZwMXQifpdCm9JEVNen3EoNeHPysGvdDNST8XQgcecIGPliUyBmheXFxcpXJ+HefcKUnSsNlo9NvM5gGH1drvslr73DbbGa3MY7efKrLbPxkzrGuVG3mgF7qhHxzgARf4wEnQHLu0lSvK1UIIa4HRGLRbrQN2iyVoMhrjeiEy5MRUVRUzNeRJKYouODxc6hsaqh8IhWZTPSsUjXoVRcnOwEzHQDzGgW7oBwd4wAU+cNKubhU6na6G9oFSi8nkNxcUBIySlBoN5pQARtWMixpPJAoCgUBjn883p39wsGHA769HTTYX8Jlk0kijqGRaFOjm4AAPuMAHTvAKHec1eqMxZjGbh2hZgaMWo16QQ6Wkkn9oqEZhau1d/7Jh3ot7nmn70Sudq7777a/dsHbN0oZEMj7LF4lUjY6tFXhWAnKCC3zgpOUaUWg2O60mU5j2ezphM2yhrLNGf7IAw9GoPSPLpevWLqt4/KsPXXPrF1bPXXVLW/3td9zStO3Jf79u4dXzS6KxWGkylTJpNO74NITHFXCCV5gMEqODPUVeWgNTymzhsUTC5nTYC9avX1FTUu61qZkUU9MjTFXSvLa2yr3q5mvKrIWF5tjISGE2grHsxhpd1qri4ASvUFIsoVXWcXlUwTldMrlCs6wzmHSSy2k3M0UmpFEmBbXCSouLzAaTXgc/xMAoFzqp0raAVzCDhFnWNDPtSwqO41g8bqXZs8uyamB08NDxdclxMopijiaTDsQpdKZHnksGTKeTeIWec9r004meOAZC05mMaSAQqOs9e7al50zfgnBs2BNPJjIykUwUlcnIcnwkngkMDZX3fHL6CsQNBIO1yIN8E8VMtw28tCdxLXcjNZNKGXzBYJ3QiYY1q6+f/cA9n29+4O7PN9+xcU1jcbHbytSLh1NVhdfVVbjvvHPd3Pvge89tLWtWXTub6UQj8iAfAV4cRA3TLbQRVTHd4IniaAsqsVTKGYpEvOs3rKju6tqyvHP7lhu7dna0bXvyP5bVN1SXqIrCL4wVTOULF7fUPv31zSu6dnS0dW5vv/GbO55Yfuu6FdXIg3zIe2HMTJc1hWac7gcURS/LstS6uKW8pLzMqSopwZW04GqG+NSLgMfEUxRFZgT84F9aXu5sbW0pRx7aSHrkHfPVotYWWlU5FyJNlwb53cPvnw34fFEu0X1QDkrhjzjEIw/yMcqbQ4pJXTWFpjO2sBgMIUehzf/9l9/4+LndL78TCoajdCMwqZCsgyQx+CMO8ciDfMib7WdMk0pTaFLEJb0+7XbYPoqPJM4+2/nCsV07X/wUXDfJjOs+BYY/4hCPPMiHvGSaFa2hIYybTaaRIqfzExIefPYbez/cvePFg6HAUJT9LXBqDwbC0Z3bv3cQ/ohDPPJQwgnPA9Q+7ZIPaDoEVW61WPxFbvfxeDwRevabe47t3PHSgSDAxx/jtI72XTtePNDZtfcY/BGHeFXjY3lsK+UFmpJnZ8dZWOgrctiP08wNdXa9cHx7114CD0U5zSz5MNTBQCiK9s6uPVk/+CMO/WTZPFRrWvIFDZF0JVK5w2YbLPJ4jsVHkqHt2793vKtz74FBXyDMDSaGGutoRz/84D86w3kBhrB8QiN/VrjDYhnELhuPJ0M7d7904vGvdv529/Y976LGOtrRDz8EkWXjqM5LyTc0RGcBAOR1u4+lkunAd77z6seb/m3bftRYRzv64UyW9ac6b2U60LgPztUY7nkdhYWDbqez2261BgoKCoSVajpLd6Md/aOUueaG/2jo1KpcoJEchsyYjZyMjlNBxi1GY8jrdB4t83je83o8RwtpHe1k0JJTThICf6oYdMGwPKlhoEmdyCGbkF7nGP3BYHlvX9+8ntOnF5BdmaNd9XFf31WnBwfn9PuDFWf7++f00DrluIos11wLoAN6oIs0omR1YuFSNiVo7HojiYS1z+9viqUSn3M5rHXeUk8tWc00jWJdM84BHdADXfS2tRA6LwU71jcVaDUly/pwNFpCm7H4jo2rG1595dmb3vzlt2693PbqK9+4aePGNfXQNUT6Uuk07nVpdQxv4npSaMGz77iM4UjUtWLFouJHN9+3qPnKpsrKihL75bbmK+dVPvLI3QuXLbu6iPR5Mqpqgt6JUc+3TgoNV3rK0aWVjHlWbYWjsrrSpaZTXJUz7LIb6aiqqfbU11W7SJ8JOqF3MpsSNJdllU6T8shIIpVKJDJMTClssrFn3k860ol4OhaLpaBPovesU0k6qXo6QOg5XqQKTKbhffsPD7zx2m+6aROkucHMON1KXj4zM1kV6ddf/033vv3v9VtMpohOiBT0TgY+OTQ96dDnkITT4ej/6MQpf3vHjsObH/76W09t7dr/zFM7fzd109YX429++Om3OrbufK/no9MBumfvp+9UCbre06RfGntSaArn9P1HpdtEn9th+7i7uzdET0Td27btOrx1265Dl8swPnR0f9Ab9DjtJx1W6+DoJUsTaEZbj750CtnlcHzidTs/omfdlF4vcYlGydnoOKR3X+qoMUkIlnMOGhfjQwfp6bHZ7adIoAydNEmTlqnMdDYJEgrOZScNUF5c/E5FScmB0uLigzkZYrzed+gW9I+lHs+fqH6vlNZL0Z5jLowPHdCDF/jQlxU6hT9Thh7NxQFu1Otj9JV/qNBkCk3V6IthkF7yRVL0Hfqsz1d9xuerO+vzV6aTSQPa0T/VXPDD+NABPaRt0l2afM6VXKERyLFVczEEyYqiGwwEqugFftOsuoraf1jS0lhbWzYrGInMRzv64ZdLXvhSTE7A5M+mA424KRvnXFHSaWkwGKwKRqP11y9dWPb8c/+19NUf7Vr/3P9tXbps2aJytKMffvCfcvJpOuYbWgXIYDhcFSLgm9quKd/asan1qsXN1QVmYVi0pKWmvf2hJWhHP/zgTyx0uaW/eSr5hFYzmQwHCAHVrVx5TVn7Ew8uaVkwt0JNpzlTVIYa62hHP/zgjzjizRt4vqCzwMFwGB/h6jCTW7b8a+v8K+ZU0P36Rccg1tGOfvjRMV+HuHyC5wN6FHi4JhCJ1N+8+tqKjo4HW5ub55YzWebZdxw0jecK5pPa0d/R/mDrylXXVlAcgQ/X5Atca2ggcDoxZWd49c3XVbQ/8aXW+c1zypgCYHSfwz2/oFI79Te1zCnb2vGlVoqrzM54NFo9eoYmh/PuM13SFJqumUp0ZMQRCofL225cTMfwpiVzmxrLVFkWdFt3aa0AJz/4tz+xaQniw+FwRSwetyPvpYNz69UUml55Ep9cEE8mzWvXLa+b19JUytVLzPB4rQQOf8QhnvKY6Bt1AfKOd53JurbQUELXZYkJJTQ0nEyn4zIXBsZ1ZJKekXj21z/ac4VgXCIf+JE/4hDPKQ/FKEzjn9AyH44/vU4XtRQURPfu/emx/9/98qG3frW/51dv7uv53b6DJ4P4gDd+QC7Us6cHhvb99u3eX7+5vwf+iEM88iCfqmr8byLjNcxkHeIsZnPE63KcONl7pv/hR/770LoNm362dt2mn9x97+O/+PDDk31ckmhqz4+iMqHu23/oxD/982Ov37LuoZ/AH3GIRx7kQ97zETNfmtpM5zAOBNroS4bLZuuhWUoIlUtMUQTneFa56BJ9Lis60U8NQqhM0usMCcQjD/JRu6ZFc2ioUxRFsprNA16X64jTbvuAnoYC9LxLXerE1JxxQUrolVQ/ffY5SjN8BPHIQ0GaF2EwGLjmWRlB6HSyvZC+TzudPXqDIajKCm5aZPZXP87iiQS9elRls8E04HY4ehAnKJ5cNdcGXlHiddNpldJrXzi9khUwo9EYH4pEk384eGQglVFlJkkMho/y8UQq/fYf/ky33LGU2aiPY3YRQ3I4mealxGvXi9rqSqM8wfbXaLSscLvFEkrF08E9L/y45wcvv/angb5AxO+PxU+dGgh96/mX3n3jjf2ndSoP0ZfM+Oi42bjRZc0qcNZW1xrF/HmNemx4us/VLPn4RCajMeGw2U+eOtUf2PzY/x6+efW9P1y18os/WLPmgR8/+dTzR8LDI4Eil6NXEiI9PlardfCBs7mp3iAWLZ6frKuvMtJupWg1wLg8XFXxbxgWP32HPh4aigx/0N07/P7RE5Fjx3qHR+Lx4SK7vbuQ9obRuLzMMvjAuXBRS0LUNdScufOOdSV2u11KpfCufHRobSuAqA6brd/rcHQ76XUtvbIN0WVpgM7w7xcWFISwYWhI+FGlbQEX+MAJXmGy6E8sXb5Yvu+eL5TTTPB4PJW3GafrMd6m9pV5vYfLvd4DpUVFf7RbLH5CVMnyAhxPpRRwgQ+cpgLpuGA/O+KzWawHNmy40fGVL3+xak5DtZG2jAKjm32IIT2aFYDBLkyIddiFbTNahm7oh82ZVW0EF/jAyV47Oij47bfLbFB3xG63/n79hjZX+5ZNsx+49x9LWhcvsBQVuSRFlpV4PC5rbMg5Zprmhl7ohn5wbCGe9be1OcEHTk68dB/EGG9oSLJ+3ds6yfB689VNifvv3zjrPzff3/hkx5cbn/naI7P/5+lHyR77DNijs6EXuqEfHFcQj06In4Mvy8kYy0JT/Sm4ffZhFpNfMhgNv6xuqPEtun6RoW3t8qLVt64sW31b29+/kU7ohW7oBwd4mG3eoTFgsP4FAAD//xt0fWAAAAAGSURBVAMAqmP9gnyBmooAAAAASUVORK5CYII=" alt="5">
+                            <div class="direction-name">5</div>
+                        </div>
+                        <div class="direction-item" data-shortcut="6"
+                            onclick="selectDirection(6)" title="左右向内">
+                            <input type="radio" name="direction" value="6">
+                            <img class="direction-icon" src="data:image/png;base64,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" alt="6">
+                            <div class="direction-name">6</div>
+                        </div>
+                        <div class="direction-item" data-shortcut="7"
+                            onclick="selectDirection(7)" title="上下向外">
+                            <input type="radio" name="direction" value="7">
+                            <img class="direction-icon" src="data:image/png;base64,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" alt="7">
+                            <div class="direction-name">7</div>
+                        </div>
+                        <div class="direction-item" data-shortcut="8"
+                            onclick="selectDirection(8)" title="左右向外">
+                            <input type="radio" name="direction" value="8">
+                            <img class="direction-icon" src="data:image/png;base64,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" alt="8">
+                            <div class="direction-name">8</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="config-section module-card module-rhythm module-group-data">
+                    <div class="config-title module-card-title">节奏生成</div>
+                    <div class="rhythm-config-groups">
+                        <div class="rhythm-config-group" data-rhythm-logic="stage">
+                            <div class="rhythm-config-group-title">阶段范围</div>
+                            <div class="config-item" data-rhythm-phase="early">
+                                <label>前期配对数：</label>
+                                <div class="count-range-inline">
+                                    <input type="number" id="rhythmEarlyPairMin" min="1" max="99" value="8" title="前15%可消对子数最小值" aria-label="前期配对数最小值">
+                                    <input type="number" id="rhythmEarlyPairMax" min="1" max="99" value="18" title="前15%可消对子数最大值" aria-label="前期配对数最大值">
+                                </div>
+                            </div>
+                            <div class="config-item" data-rhythm-phase="early">
+                                <label>前期距离：</label>
+                                <div class="count-range-inline">
+                                    <input type="number" id="rhythmEarlyDistanceMin" min="1" max="99" value="1" title="前15%路径距离最小值" aria-label="前期距离最小值">
+                                    <input type="number" id="rhythmEarlyDistanceMax" min="1" max="99" value="7" title="前15%路径距离最大值" aria-label="前期距离最大值">
+                                </div>
+                            </div>
+                            <div class="config-item" data-rhythm-phase="middle">
+                                <label>中期配对数：</label>
+                                <div class="count-range-inline">
+                                    <input type="number" id="rhythmMiddlePairMin" min="1" max="99" value="4" title="15%-65%可消对子数最小值" aria-label="中期配对数最小值">
+                                    <input type="number" id="rhythmMiddlePairMax" min="1" max="99" value="12" title="15%-65%可消对子数最大值" aria-label="中期配对数最大值">
+                                </div>
+                            </div>
+                            <div class="config-item" data-rhythm-phase="middle">
+                                <label>中期距离：</label>
+                                <div class="count-range-inline">
+                                    <input type="number" id="rhythmMiddleDistanceMin" min="1" max="99" value="3" title="15%-65%路径距离最小值" aria-label="中期距离最小值">
+                                    <input type="number" id="rhythmMiddleDistanceMax" min="1" max="99" value="12" title="15%-65%路径距离最大值" aria-label="中期距离最大值">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rhythm-config-group" data-rhythm-logic="wave">
+                            <div class="rhythm-config-group-title">中期起伏</div>
+                            <div class="config-item">
+                                <label>中期波动：</label>
+                                <div class="count-range-inline">
+                                    <input type="number" id="rhythmWaveMin" min="0" max="3" value="0" disabled title="中期波动逻辑已屏蔽" aria-label="中期波动次数最小值">
+                                    <input type="number" id="rhythmWaveMax" min="0" max="3" value="0" disabled title="中期波动逻辑已屏蔽" aria-label="中期波动次数最大值">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rhythm-config-group" data-rhythm-logic="placement">
+                            <div class="rhythm-config-group-title">放置偏好</div>
+                            <div class="config-item">
+                                <label for="rhythmSameLayerChance">同层概率：</label>
+                                <input type="number" id="rhythmSameLayerChance" min="0" max="1" step="0.05" value="0.5" title="第一张牌落在某层后，第二张优先同层的概率" aria-label="同层放置概率">
+                            </div>
+                        </div>
+
+                        <div class="rhythm-config-group" data-rhythm-logic="stuck">
+                            <div class="rhythm-config-group-title">卡点</div>
+                            <div class="config-item">
+                                <label for="rhythmStuckPairChance">卡点概率：</label>
+                                <input type="number" id="rhythmStuckPairChance" min="0" max="1" step="0.05" value="0" title="中期尝试放置初始不可配对卡点对的概率" aria-label="卡点概率">
+                            </div>
+                            <div class="config-item">
+                                <label for="rhythmStuckPairCount">卡点数量：</label>
+                                <input type="number" id="rhythmStuckPairCount" min="0" max="99" value="0" title="每关最多放置的卡点对数量" aria-label="卡点数量">
+                            </div>
+                        </div>
+
+                        <div class="rhythm-config-group" data-rhythm-logic="connection">
+                            <div class="rhythm-config-group-title">连接类型权重</div>
+                            <div class="config-item">
+                                <label>直线/1拐权重：</label>
+                                <div class="count-range-inline">
+                                    <input type="number" id="rhythmWeightStraight" min="0" max="20" step="0.5" value="2.5" title="直线连接权重" aria-label="直线连接权重">
+                                    <input type="number" id="rhythmWeightOneTurn" min="0" max="20" step="0.5" value="4" title="1拐连接权重" aria-label="1拐连接权重">
+                                </div>
+                            </div>
+                            <div class="config-item">
+                                <label>2拐权重：</label>
+                                <div class="count-range-inline">
+                                    <input type="number" id="rhythmWeightSameTwoTurn" min="0" max="20" step="0.5" value="3" title="同向2拐权重" aria-label="同向2拐权重">
+                                    <input type="number" id="rhythmWeightReverseTwoTurn" min="0" max="20" step="0.5" value="2" title="反向2拐权重" aria-label="反向2拐权重">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="error-msg" id="errorMsg" style="display: none;"></div>
+            </div>
+
+            <div class="panel workspace-panel">
+                <div class="board-layout">
+                    <div class="board-editor-panel">
+                        <div class="editor-section module-card module-level-editor module-group-data">
+                            <div class="editor-title-row module-card-title">
+                                <div class="result-title">关卡编辑</div>
+                                <select
+                                    id="recentGenerationSelect"
+                                    class="editor-recent-generate-select"
+                                    title="最近10次生成记录"
+                                    onchange="applyRecentGenerationRecordFromDropdown()"
+                                >
+                                    <option value="">最近生成记录</option>
+                                </select>
+                            </div>
+                            <div class="editor-board-actions">
+                                <button class="btn-generate hotkey-button" id="btnFillBoard" data-shortcut="R"
+                                    onclick="fillBoard()"><span class="editor-board-action-label">生成</span></button>
+                                <button class="btn-primary hotkey-button" data-shortcut="N"
+                                    onclick="refreshBoardWithPlaceholder()"><span class="editor-board-action-label">刷新棋盘</span></button>
+                                <button class="btn-secondary hotkey-button" data-shortcut="C"
+                                    onclick="clearBoard()"><span class="editor-board-action-label">清空</span></button>
+                                <button class="btn-primary" onclick="importBoardFromClipboard()"><span class="editor-board-action-label">读取阵型</span></button>
+                                <button class="btn-secondary hotkey-button" id="btnSaveCurrentLevel"
+                                    data-shortcut="S"
+                                    onclick="saveCurrentLevelToList()"><span class="editor-board-action-label">保存本关</span></button>
+                                <button class="btn-export" id="btnExportSingle"
+                                    onclick="exportToClipboard()"><span class="editor-board-action-label">导出当前</span></button>
+                            </div>
+                            <div class="editor-tools" id="editorTools"></div>
+                        </div>
+
+                        <div class="stats-section module-card module-level-stats module-group-data">
+                            <div class="result-title module-card-title">每关统计</div>
+                            <div class="stats-actions">
+                                <button class="btn-primary" id="btnStepGenerate" onclick="stepGenerateOrNext()">分步生成</button>
+                                <button class="btn-secondary" id="btnPlayMode" onclick="togglePlayMode()"
+                                    style="margin-top: 8px;">试玩模式</button>
+                                <div class="stats-sim-controls">
+                                    <input
+                                        type="number"
+                                        id="simulateGameCount"
+                                        min="1"
+                                        max="10000"
+                                        value="100"
+                                        oninput="updateSimulateUiLabels()"
+                                    >
+                                    <label class="stats-sim-controls-label" for="simulateGameCount">模拟局数</label>
+                                    <button
+                                        type="button"
+                                        class="stats-local-human-toggle"
+                                        id="btnStatsLocalHumanMode"
+                                        onclick="toggleStatsLocalHumanMode()"
+                                    >人类模式：关</button>
+                                    <button
+                                        type="button"
+                                        class="stats-local-human-toggle"
+                                        id="btnStepPairExportScope"
+                                        onclick="toggleStepPairExportScope()"
+                                    >每步数据：所有局</button>
+                                    <input
+                                        type="number"
+                                        id="humanModeBesidePercent"
+                                        class="stats-human-beside-input"
+                                        min="0"
+                                        max="100"
+                                        step="1"
+                                        value="70"
+                                        oninput="handleHumanModeBesidePercentInput()"
+                                    >
+                                    <label class="stats-human-beside-label" for="humanModeBesidePercent">
+                                        相邻优先%
+                                    </label>
+                                </div>
+                                <button class="btn-export hotkey-button" data-shortcut="空格"
+                                    id="btnSimulatePlay" onclick="simulatePlayGames()"
+                                    style="margin-top: 8px;">模拟100局</button>
+                            </div>
+                            <div class="stats-grid">
+                                <div class="stats-item">
+                                    <div class="stats-item-title" id="levelStatsSimulationTitle">模拟100局胜率</div>
+                                    <div class="stats-line" id="levelStatsSimulation">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-title">本关初始相邻配对</div>
+                                    <div class="stats-line" id="levelStatsInitialPairCount">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-title">本关平均配对</div>
+                                    <div class="stats-line" id="levelStatsAveragePairCount">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-title">失败位置</div>
+                                    <div class="stats-line" id="levelStatsFailurePosition">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-title">关卡平均试错次数</div>
+                                    <div class="stats-line" id="levelStatsAvgTrialError">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-title">本局最高试错次数</div>
+                                    <div class="stats-line" id="levelStatsMaxTrialError">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="result-section module-card module-config-result module-group-data">
+                            <div class="result-title module-card-title">配置结果</div>
+                            <div class="result-grid">
+                                <div class="result-item">
+                                    <div class="result-value" id="result8">0</div>
+                                    <div class="result-label">8张种类</div>
+                                </div>
+                                <div class="result-item">
+                                    <div class="result-value" id="result6">0</div>
+                                    <div class="result-label">6张种类</div>
+                                </div>
+                                <div class="result-item">
+                                    <div class="result-value" id="result4">0</div>
+                                    <div class="result-label">4张种类</div>
+                                </div>
+                                <div class="result-item">
+                                    <div class="result-value" id="result2">0</div>
+                                    <div class="result-label">2张种类</div>
+                                </div>
+                                <div class="result-item">
+                                    <div class="result-value" id="resultTotalTypes">0</div>
+                                    <div class="result-label">种类数</div>
+                                </div>
+                                <div class="result-item">
+                                    <div class="result-value" id="resultTotalCards">0</div>
+                                    <div class="result-label">总卡牌</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="board-container">
+                        <div class="board-top-tools">
+                            <div class="board-status-row">
+                                <div class="info" id="info"></div>
+                                <button
+                                    type="button"
+                                    id="btnPlayRetry"
+                                    class="btn-play-retry"
+                                    onclick="restartPlayMode()"
+                                >重玩</button>
+                                <div class="board-bg-control">
+                                    <label for="boardBgDropdownToggle">背景</label>
+                                    <div
+                                        class="board-bg-dropdown"
+                                        id="boardBgDropdown"
+                                    >
+                                        <button
+                                            type="button"
+                                            id="boardBgDropdownToggle"
+                                            class="board-bg-dropdown-toggle"
+                                            onclick="toggleBoardBackgroundDropdown(event)"
+                                        >
+                                            <span id="boardBgDropdownToggleText">背景1</span>
+                                        </button>
+                                        <div class="board-bg-dropdown-menu" id="boardBgDropdownMenu"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="board-wrapper" id="boardWrapper">
+                            <div class="board-layer-preview-stack" id="boardLayerPreviewStack"></div>
+                            <div class="board" id="board"></div>
+                        </div>
+                        <div class="simulator-top-hud" aria-hidden="true">
+                            <div class="simulator-level-hud">
+                                <div class="simulator-level-title" id="simulatorLevelTitle">关卡 临时</div>
+                                <div class="simulator-direction-badge">
+                                    <img
+                                        class="simulator-direction-icon"
+                                        id="simulatorDirectionIcon"
+                                        src="/game_editor/assets/ruleIcon_0-DWviBK4M.png"
+                                        alt=""
+                                    >
+                                </div>
+                            </div>
+                            <div class="simulator-vita-tray" id="vitaMahjongTray" aria-label="待选区">
+                                <div class="simulator-vita-tray-slot"></div>
+                                <div class="simulator-vita-tray-slot"></div>
+                                <div class="simulator-vita-tray-slot"></div>
+                                <div class="simulator-vita-tray-slot"></div>
+                            </div>
+                            <div class="simulator-countdown-hud" id="simulatorLimitHud" aria-hidden="true">
+                                <span class="simulator-countdown-icon" id="simulatorLimitIcon"></span>
+                                <span id="simulatorCountdownTime">05:00</span>
+                            </div>
+                        </div>
+                        <div class="simulator-props-bar" aria-label="道具栏">
+                            <button
+                                type="button"
+                                class="simulator-prop-button"
+                                title="提示"
+                                aria-label="提示"
+                                onclick="usePlayHintTool()"
+                            >
+                                <img class="simulator-prop-icon" src="/game_editor/assets/Game_icon_tips-nIiURoQ-.png" alt="">
+                                <span>提示</span>
+                            </button>
+                            <button
+                                type="button"
+                                class="simulator-prop-button"
+                                title="洗牌"
+                                aria-label="洗牌"
+                                onclick="usePlayShuffleTool()"
+                            >
+                                <img class="simulator-prop-icon" src="/game_editor/assets/Game_icon_shuffle-VUQwdYRC.png" alt="">
+                                <span>洗牌</span>
+                            </button>
+                            <button
+                                type="button"
+                                class="simulator-prop-button"
+                                title="冰冻"
+                                aria-label="冰冻"
+                                onclick="usePlayFreezeTool()"
+                            >
+                                <img class="simulator-prop-icon" src="/game_editor/assets/Game_icon_freeze-CbVF3_Ak.png" alt="">
+                                <span>冰冻</span>
+                            </button>
+                        </div>
+                        <div class="board-bottom-actions">
+                            <button
+                                type="button"
+                                id="btnPlayAutoPair"
+                                class="btn-play-auto-pair"
+                                onclick="autoMatchPlayPair()"
+                            >自动配对</button>
+                        </div>
+                    </div>
+
+                    <div
+                        class="play-settings-panel module-card board-settings-node module-operation-settings module-group-rules open"
+                        id="playSettingsPanel"
+                        onclick="event.stopPropagation()"
+                    >
+                        <div class="play-settings-title module-card-title">操作方式</div>
+                        <label class="play-operation-option">
+                            <input
+                                type="radio"
+                                name="playOperationMode"
+                                value="click"
+                                onchange="setPlayOperationMode('click')"
+                                checked
+                            >
+                            <span>点击操作</span>
+                        </label>
+                        <label class="play-operation-option">
+                            <input
+                                type="radio"
+                                name="playOperationMode"
+                                value="link"
+                                onchange="setPlayOperationMode('link')"
+                            >
+                            <span>连线操作</span>
+                        </label>
+                        <label class="play-operation-option">
+                            <input
+                                type="radio"
+                                name="playOperationMode"
+                                value="drag"
+                                onchange="setPlayOperationMode('drag')"
+                            >
+                            <span>拖动操作</span>
+                        </label>
+                    </div>
+                    <div
+                        class="play-settings-panel module-card board-settings-node module-game-play-settings module-group-rules open"
+                        id="gamePlaySettingsPanel"
+                        onclick="event.stopPropagation()"
+                    >
+                        <div class="play-settings-title module-card-title">游戏玩法</div>
+                        <div class="game-play-options">
+                            <label class="game-play-choice">
+                                <input
+                                    type="radio"
+                                    name="gamePlayMode"
+                                    value="lianliankan"
+                                    onchange="setGamePlayMode('lianliankan')"
+                                    checked
+                                >
+                                <span>连连看玩法</span>
+                            </label>
+                            <label class="game-play-choice">
+                                <input
+                                    type="radio"
+                                    name="gamePlayMode"
+                                    value="vita-mahjong"
+                                    onchange="setGamePlayMode('vita-mahjong')"
+                                >
+                                <span>Vita麻将玩法</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div
+                        class="play-settings-panel module-card board-settings-node module-vita-classic-settings module-group-rules open"
+                        id="vitaClassicSettingsPanel"
+                        onclick="event.stopPropagation()"
+                    >
+                        <div class="play-settings-title module-card-title">经典玩法</div>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="vitaMahjongMode"
+                                value="classic"
+                                onchange="setVitaMahjongMode('classic')"
+                                checked
+                            >
+                            <span>启用</span>
+                        </label>
+                    </div>
+                    <div
+                        class="play-settings-panel module-card board-settings-node module-vita-tray-settings module-group-rules open"
+                        id="vitaTraySettingsPanel"
+                        onclick="event.stopPropagation()"
+                    >
+                        <div class="play-settings-title module-card-title">待选区玩法</div>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="vitaMahjongMode"
+                                value="tray"
+                                onchange="setVitaMahjongMode('tray')"
+                            >
+                            <span>启用</span>
+                        </label>
+                    </div>
+                    <div
+                        class="play-settings-panel module-card board-settings-node module-game-goal-settings module-group-rules open"
+                        id="gameGoalSettingsPanel"
+                        onclick="event.stopPropagation()"
+                    >
+                        <div class="play-settings-title module-card-title">游戏目标</div>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="gameGoalMode"
+                                value="all"
+                                onchange="setGameGoalMode('all')"
+                                checked
+                            >
+                            <span>全部消除</span>
+                        </label>
+                        <label class="play-style-option game-goal-partial-option">
+                            <input
+                                type="radio"
+                                name="gameGoalMode"
+                                value="partial"
+                                onchange="setGameGoalMode('partial')"
+                            >
+                            <span>部分消除</span>
+                            <span class="game-goal-pair-control">
+                                <span>随机</span>
+                                <input
+                                    type="number"
+                                    id="gameGoalTargetPairs"
+                                    min="1"
+                                    max="99"
+                                    value="3"
+                                    onchange="setGameGoalTargetPairs(this.value)"
+                                    oninput="setGameGoalTargetPairs(this.value)"
+                                    aria-label="部分消除目标对数"
+                                >
+                                <span>对目标</span>
+                            </span>
+                        </label>
+                    </div>
+                    <div
+                        class="play-settings-panel module-card board-settings-node module-game-limit-settings module-group-rules open"
+                        id="gameLimitSettingsPanel"
+                        onclick="event.stopPropagation()"
+                    >
+                        <div class="play-settings-title module-card-title">游戏限制</div>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="gameLimitMode"
+                                value="time"
+                                onchange="setGameLimitMode('time')"
+                                checked
+                            >
+                            <span>时间限制</span>
+                        </label>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="gameLimitMode"
+                                value="error"
+                                onchange="setGameLimitMode('error')"
+                            >
+                            <span>错误次数限制</span>
+                        </label>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="gameLimitMode"
+                                value="none"
+                                onchange="setGameLimitMode('none')"
+                            >
+                            <span>无限制</span>
+                        </label>
+                    </div>
+                    <div
+                        class="play-settings-panel module-card board-settings-node module-click-hint-settings module-group-rules open"
+                        id="playClickHintSettingsPanel"
+                        onclick="event.stopPropagation()"
+                    >
+                        <div class="play-settings-title module-card-title">相同块提示</div>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="playClickHintMode"
+                                value="selected"
+                                onchange="setPlayClickHintMode('selected')"
+                                checked
+                            >
+                            <span>始终提示</span>
+                        </label>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="playClickHintMode"
+                                value="hold"
+                                onchange="setPlayClickHintMode('hold')"
+                            >
+                            <span>按住提示</span>
+                        </label>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="playClickHintMode"
+                                value="none"
+                                onchange="setPlayClickHintMode('none')"
+                            >
+                            <span>不提示</span>
+                        </label>
+                    </div>
+                    <div
+                        class="play-settings-panel module-card board-settings-node module-link-settings module-group-rules open"
+                        id="playLinkSettingsPanel"
+                        onclick="event.stopPropagation()"
+                    >
+                        <div class="play-settings-title module-card-title">连线样式</div>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="playLinkStyle"
+                                value="line"
+                                onchange="setPlayLinkStyle('line')"
+                            >
+                            <span>连线</span>
+                        </label>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="playLinkStyle"
+                                value="band"
+                                onchange="setPlayLinkStyle('band')"
+                                checked
+                            >
+                            <span>条带</span>
+                        </label>
+                    </div>
+                    <div
+                        class="play-settings-panel module-card board-settings-node module-turn-limit-settings module-group-rules open"
+                        id="gameTurnLimitSettingsPanel"
+                        onclick="event.stopPropagation()"
+                    >
+                        <div class="play-settings-title module-card-title">拐弯次数限制</div>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="gameTurnLimitMode"
+                                value="1"
+                                onchange="setGameTurnLimitMode('1')"
+                            >
+                            <span>1次</span>
+                        </label>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="gameTurnLimitMode"
+                                value="2"
+                                onchange="setGameTurnLimitMode('2')"
+                                checked
+                            >
+                            <span>2次</span>
+                        </label>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="gameTurnLimitMode"
+                                value="3"
+                                onchange="setGameTurnLimitMode('3')"
+                            >
+                            <span>3次</span>
+                        </label>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="gameTurnLimitMode"
+                                value="unlimited"
+                                onchange="setGameTurnLimitMode('unlimited')"
+                            >
+                            <span>无限制</span>
+                        </label>
+                    </div>
+                    <div
+                        class="play-settings-panel module-card board-settings-node module-fill-settings module-group-rules open"
+                        id="gameFillSettingsPanel"
+                        onclick="event.stopPropagation()"
+                    >
+                        <div class="play-settings-title module-card-title">掉落补位</div>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="gameFillMode"
+                                value="gravity"
+                                onchange="setGameFillMode('gravity')"
+                            >
+                            <span>重力补位（始终从上往下）</span>
+                        </label>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="gameFillMode"
+                                value="direction"
+                                onchange="setGameFillMode('direction')"
+                                checked
+                            >
+                            <span>方向补位（根据方向规则补位）</span>
+                        </label>
+                        <label class="play-style-option">
+                            <input
+                                type="radio"
+                                name="gameFillMode"
+                                value="none"
+                                onchange="setGameFillMode('none')"
+                            >
+                            <span>无补位</span>
+                        </label>
+                    </div>
+
+                    <div class="board-side-panel">
+                        <div class="play-step-log-section module-card module-play-log module-group-data" id="playStepLogSection" hidden>
+                            <div class="play-step-log-header module-card-title">
+                                <div class="result-title">试玩消除记录</div>
+                                <div class="play-step-log-counts" id="playStepTypeCounts">
+                                    0拐：0，1拐：0，同向2拐：0，反向2拐：0
+                                </div>
+                            </div>
+                            <div class="play-step-log-list" id="playStepLogList">
+                                <div class="play-step-log-empty">进入试玩后会在这里按步骤记录消除连接类型</div>
+                            </div>
+                        </div>
+                        <div class="saved-levels-section module-card module-saved-levels module-group-data">
+                            <div class="saved-levels-header module-card-title">
+                                <div class="result-title">关卡列表</div>
+                                <div class="saved-level-save-mode">
+                                    <label for="savedLevelSaveMode">保存模式</label>
+                                    <select id="savedLevelSaveMode" title="保存本关或保存编辑时使用的关卡数据格式">
+                                        <option value="layout" selected>保存阵型</option>
+                                        <option value="data">保存数据</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="saved-level-actions">
+                                <button class="btn-primary" onclick="triggerImportSavedLevels()">读取</button>
+                                <button class="btn-secondary" onclick="saveSavedLevelsToCurrentFile()">保存</button>
+                                <button class="btn-export" onclick="exportSavedLevels()">导出</button>
+                            </div>
+                            <div class="saved-level-list" id="savedLevelList"></div>
+                            <input
+                                type="file"
+                                id="savedLevelFileInput"
+                                accept=".txt,.json,text/plain,application/json"
+                                onchange="handleSavedLevelFileChange(event)"
+                                style="display: none;"
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="global-interaction-blocker" id="globalInteractionBlocker" aria-hidden="true"></div>
+    <div class="saved-level-context-menu" id="savedLevelContextMenu">
+        <button type="button" onclick="handleSavedLevelContextAction('edit')">编辑</button>
+        <button type="button" onclick="handleSavedLevelContextAction('reorder')">输入序号</button>
+        <button type="button" onclick="handleSavedLevelContextAction('delete')">删除</button>
+    </div>
+    <div class="saved-level-preview" id="savedLevelPreview"></div>
+    <button
+        type="button"
+        class="agent-float-icon"
+        id="agentFloatIcon"
+        title="打开 Agent 对话框"
+        aria-label="打开 Agent 对话框"
+    >
+        <span class="agent-float-icon-mark">🤖</span>
+    </button>
+    <section class="agent-dialog" id="agentDialog" aria-label="Agent 对话框">
+        <div class="agent-dialog-header" id="agentDialogHeader">
+            <div class="agent-dialog-title">Agent 助手</div>
+            <div class="agent-dialog-header-actions">
+                <div class="agent-run-controls">
+                    <button type="button" class="agent-btn" id="agentRunSettingsBtn">运行设置</button>
+                    <button type="button" class="agent-btn" id="agentRunStartBtn">开始</button>
+                    <button type="button" class="agent-btn" id="agentRunStepBtn">下一步</button>
+                    <button type="button" class="agent-btn" id="agentRunStopBtn">终止</button>
+                </div>
+                <div class="agent-dialog-controls">
+                    <button type="button" class="agent-btn" id="agentNewChatBtn">新对话</button>
+                    <button type="button" class="agent-btn" id="agentConfigBtn">配置</button>
+                    <button type="button" class="agent-btn" id="agentMinimizeBtn">最小化</button>
+                </div>
+            </div>
+        </div>
+        <div class="agent-run-settings-overlay" id="agentRunSettingsOverlay">
+            <div class="agent-run-settings-panel" id="agentRunSettingsPanel">
+                <div class="agent-run-settings-head">
+                    <div class="agent-run-settings-title">运行配置</div>
+                    <button type="button" class="agent-btn" id="agentRunSettingsCloseBtn">关闭</button>
+                </div>
+                <div class="agent-run-settings-grid">
+                    <label for="agentRunModeSelect">模式</label>
+                    <select id="agentRunModeSelect">
+                        <option value="continuous">持续操作</option>
+                        <option value="step">单步操作</option>
+                    </select>
+                    <span></span>
+                    <label class="agent-human-mode-toggle">
+                        <input type="checkbox" id="agentHumanModeToggle">
+                        <span>人类模式</span>
+                    </label>
+                    <label class="agent-human-mode-toggle">
+                        <input type="checkbox" id="agentQuickModeToggle">
+                        <span>快速模式（全本地）</span>
+                    </label>
+                    <span></span>
+                    <label for="agentModelSelect">模型</label>
+                    <select id="agentModelSelect" class="agent-model-select"></select>
+                    <button type="button" class="agent-btn" id="agentValidateApiBtn">验证</button>
+                </div>
+            </div>
+        </div>
+        <div class="agent-run-status" id="agentRunStatus">状态：空闲</div>
+        <div class="agent-chat-body">
+            <div class="agent-memory-panel" id="agentMemoryPanel">
+                <div class="agent-memory-empty">每步记忆会在这里显示（摘要与趋势）。</div>
+            </div>
+            <div class="agent-chat-list" id="agentChatList">
+                <div class="agent-chat-empty">这里会显示对话消息。先读取本地 API 配置文件，再开始聊天。</div>
+            </div>
+            <div class="agent-chat-input-row">
+                <input type="text" id="agentChatInput" placeholder="输入消息，按 Enter 发送">
+                <button type="button" class="agent-btn agent-send-btn" id="agentSendBtn">发送</button>
+            </div>
+        </div>
+    </section>
+    <div class="agent-config-overlay" id="agentConfigOverlay">
+        <div class="agent-config-modal" id="agentConfigModal">
+            <div class="agent-config-title">Agent API 配置（本地文件）</div>
+            <div class="agent-config-grid">
+                <div class="agent-config-field">
+                    <label>配置文件</label>
+                    <div class="agent-config-file-row">
+                        <button type="button" class="agent-btn" id="agentConfigLoadFileBtn">选择本地配置文件</button>
+                        <input
+                            type="file"
+                            id="agentConfigFileInput"
+                            accept=".json,application/json"
+                            style="display: none;"
+                        >
+                    </div>
+                    <div class="agent-config-status" id="agentConfigFileStatus">
+                        未加载配置文件
+                    </div>
+                </div>
+                <div class="agent-config-preview">
+                    <div class="agent-config-preview-item">
+                        配置项：
+                        <select id="agentConfigProfileSelect" class="agent-config-profile-select"></select>
+                    </div>
+                    <div class="agent-config-preview-item">名称：<span id="agentConfigPreviewName">-</span></div>
+                    <div class="agent-config-preview-item">Base URL：<span id="agentConfigPreviewBaseUrl">-</span></div>
+                    <div class="agent-config-preview-item">API Key：<span id="agentConfigPreviewApiKey">-</span></div>
+                    <div class="agent-config-preview-item">Model：<span id="agentConfigPreviewModel">-</span></div>
+                    <div class="agent-config-preview-item">验证：<span id="agentConfigPreviewValidation">未验证</span></div>
+                </div>
+            </div>
+            <div class="agent-config-actions">
+                <button type="button" class="agent-btn" id="agentConfigCancelBtn">取消</button>
+                <button type="button" class="agent-btn" id="agentConfigSaveBtn">保存并关闭</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
